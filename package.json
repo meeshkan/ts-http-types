@@ -1,0 +1,40 @@
+{
+  "name": "http-types",
+  "version": "0.1.0",
+  "description": "Library for JSON serialisation of HTTP exchanges",
+  "license": "MIT",
+  "keywords": [
+    "typescript",
+    "http",
+    "http-types"
+  ],
+  "homepage": "https://github.com/meeshkan/ts-http-types",
+  "bugs": {
+    "url": "https://github.com/meeshkan/ts-http-types/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/meeshkan/ts-http-types.git"
+  },
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "npm run lint && npm run test && npm run transpile",
+    "lint": "eslint --ext .ts src/",
+    "prepublish": "npm run build",
+    "test": "jest",
+    "transpile": "tsc"
+  },
+  "devDependencies": {
+    "@types/jest": "^25.1.1",
+    "@typescript-eslint/eslint-plugin": "^2.18.0",
+    "@typescript-eslint/parser": "^2.18.0",
+    "eslint": "^6.8.0",
+    "eslint-config-prettier": "^6.10.0",
+    "eslint-plugin-prettier": "^3.1.2",
+    "jest": "^25.1.0",
+    "prettier": "^1.19.1",
+    "ts-jest": "^25.1.0",
+    "typescript": "^3.7.5"
+  }
+}
