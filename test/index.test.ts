@@ -1,6 +1,7 @@
 import {
   HttpExchange,
   HttpExchangeReader,
+  HttpProtocol,
   HttpRequestBuilder,
   HttpResponseBuilder,
   HttpMethod
@@ -13,11 +14,18 @@ test("HttpRequest building from code", () => {
   expect(request1.body).toBeUndefined();
 
   const request2 = new HttpRequestBuilder()
+    .withProtocol(HttpProtocol.HTTPS)
     .withMethod(HttpMethod.POST)
     .withBody("hello, world")
     .build();
+  expect(request2.protocol).toBe(HttpProtocol.HTTPS);
   expect(request2.method).toBe(HttpMethod.POST);
   expect(request2.body).toBe("hello, world");
+});
+
+test("HttpResponse building from code", () => {
+  const response = new HttpResponseBuilder().withStatusCode(404).build();
+  expect(response.statusCode).toBe(404);
 });
 
 test("HttpExchange building from code", () => {
@@ -32,6 +40,7 @@ test("HttpExchange building from code", () => {
 test("Http exchanges from JSON", () => {
   const json = `{
     "request": {
+      "protocol": "https",
       "method": "post"
     },
     "response": {
@@ -40,6 +49,7 @@ test("Http exchanges from JSON", () => {
   }`;
 
   const exchange = HttpExchangeReader.fromJson(json);
+  expect(exchange.request.protocol).toBe(HttpProtocol.HTTPS);
   expect(exchange.request.method).toBe(HttpMethod.POST);
   expect(exchange.response.statusCode).toBe(404);
 });

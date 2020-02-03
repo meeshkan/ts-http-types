@@ -30,18 +30,26 @@ export enum HttpProtocol {
 
 /** HTTP request. */
 export class HttpRequest {
+  protocol: HttpProtocol;
   method: HttpMethod;
   body?: string;
 
   public constructor(builder: HttpRequestBuilder) {
+    this.protocol = builder.protocol;
     this.method = builder.method;
     this.body = builder.body;
   }
 }
 
 export class HttpRequestBuilder {
+  protocol?: HttpProtocol;
   method?: HttpMethod;
   body?: string;
+
+  withProtocol(protocol: HttpProtocol): this {
+    this.protocol = protocol;
+    return this;
+  }
 
   withMethod(method: HttpMethod): this {
     this.method = method;
@@ -100,10 +108,15 @@ export class HttpExchangeReader {
     const parsedRequest = parsedObject.request;
     const parsedResponse = parsedObject.response;
 
-    console.log("method= " + parsedRequest.method);
+    const protocol: HttpProtocol =
+      HttpProtocol[(parsedRequest.protocol as string).toUpperCase()];
     const method: HttpMethod =
       HttpMethod[(parsedRequest.method as string).toUpperCase()];
-    const request = new HttpRequestBuilder().withMethod(method).build();
+
+    const request = new HttpRequestBuilder()
+      .withProtocol(protocol)
+      .withMethod(method)
+      .build();
 
     const response = new HttpResponseBuilder()
       .withStatusCode(parsedResponse.statusCode)
