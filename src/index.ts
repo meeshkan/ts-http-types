@@ -77,12 +77,14 @@ export class HttpHeaders {
 
 /** HTTP request. */
 export class HttpRequest {
+  timestamp?: Date;
   protocol: HttpProtocol;
   method: HttpMethod;
   headers: HttpHeaders;
   body?: string;
 
   public constructor(builder: HttpRequestBuilder) {
+    this.timestamp = builder.timestamp;
     this.protocol = builder.protocol;
     this.method = builder.method;
     this.headers = builder.headers;
@@ -91,10 +93,16 @@ export class HttpRequest {
 }
 
 export class HttpRequestBuilder {
+  timestamp?: Date;
   protocol?: HttpProtocol;
   method?: HttpMethod;
   headers?: HttpHeaders;
   body?: string;
+
+  withTimestamp(timestamp: Date): this {
+    this.timestamp = timestamp;
+    return this;
+  }
 
   withProtocol(protocol: HttpProtocol): this {
     this.protocol = protocol;
@@ -122,11 +130,13 @@ export class HttpRequestBuilder {
 }
 
 export class HttpResponse {
-  statusCode?: number;
+  timestamp?: Date;
+  statusCode: number;
   headers: HttpHeaders;
   body?: string;
 
   constructor(builder: HttpResponseBuilder) {
+    this.timestamp = builder.timestamp;
     this.statusCode = builder.statusCode;
     this.headers = builder.headers;
     this.body = builder.body;
@@ -134,9 +144,15 @@ export class HttpResponse {
 }
 
 export class HttpResponseBuilder {
+  timestamp?: Date;
   statusCode?: number;
   headers?: HttpHeaders;
   body?: string;
+
+  withTimestamp(timestamp: Date): this {
+    this.timestamp = timestamp;
+    return this;
+  }
 
   withStatusCode(statusCode: number): this {
     this.statusCode = statusCode;
@@ -171,6 +187,9 @@ export class HttpExchangeReader {
     const parsedRequest = parsedObject.request;
     const parsedResponse = parsedObject.response;
 
+    const requestTimestamp = parsedRequest.timestamp
+      ? new Date(parsedRequest.timestamp)
+      : null;
     const protocol: HttpProtocol =
       HttpProtocol[(parsedRequest.protocol as string).toUpperCase()];
     const method: HttpMethod =
@@ -178,17 +197,22 @@ export class HttpExchangeReader {
     const requestHeaders: HttpHeaders = new HttpHeaders(parsedRequest.headers);
 
     const request = new HttpRequestBuilder()
+      .withTimestamp(requestTimestamp)
       .withProtocol(protocol)
       .withMethod(method)
       .withHeaders(requestHeaders)
       .withBody(parsedRequest.body)
       .build();
 
+    const responseTimestamp = parsedResponse.timestamp
+      ? new Date(parsedResponse.timestamp)
+      : null;
     const responseHeaders: HttpHeaders = new HttpHeaders(
       parsedResponse.headers
     );
 
     const response = new HttpResponseBuilder()
+      .withTimestamp(responseTimestamp)
       .withStatusCode(parsedResponse.statusCode)
       .withHeaders(responseHeaders)
       .withBody(parsedResponse.body)

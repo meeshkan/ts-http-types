@@ -41,6 +41,7 @@ test("Http exchanges from JSON", () => {
   const json = `{
     "request": {
       "protocol": "https",
+      "timestamp": "2018-11-13T20:20:39+02:00",
       "method": "post",
       "headers": {
         "accept": "*/*",
@@ -49,6 +50,7 @@ test("Http exchanges from JSON", () => {
       "body": "a request body"
     },
     "response": {
+      "timestamp": "2019-11-13T20:20:39+02:00",
       "statusCode": 404,
       "headers": {
         "content-length": "15",
@@ -60,6 +62,9 @@ test("Http exchanges from JSON", () => {
 
   const exchange = HttpExchangeReader.fromJson(json);
 
+  expect(exchange.request.timestamp).toEqual(
+    new Date("2018-11-13T20:20:39+02:00")
+  );
   expect(exchange.request.protocol).toBe(HttpProtocol.HTTPS);
   expect(exchange.request.method).toBe(HttpMethod.POST);
   expect(exchange.request.headers.get("accept")).toBe("*/*");
@@ -70,6 +75,9 @@ test("Http exchanges from JSON", () => {
   ]);
   expect(exchange.request.body).toBe("a request body");
 
+  expect(exchange.response.timestamp).toEqual(
+    new Date("2019-11-13T20:20:39+02:00")
+  );
   expect(exchange.response.statusCode).toBe(404);
   expect(exchange.response.headers.get("content-length")).toBe("15");
   expect(exchange.response.headers.get("Upper-Case")).toBe("yes");
