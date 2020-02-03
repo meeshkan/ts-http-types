@@ -41,15 +41,38 @@ test("Http exchanges from JSON", () => {
   const json = `{
     "request": {
       "protocol": "https",
-      "method": "post"
+      "method": "post",
+      "headers": {
+        "accept": "*/*",
+        "multi-value": ["value1", "value2"]
+      },
+      "body": "a request body"
     },
     "response": {
-      "statusCode": 404
+      "statusCode": 404,
+      "headers": {
+        "content-length": "15",
+        "Upper-Case": "yes"
+      },
+      "body": "a response body"
     }
   }`;
 
   const exchange = HttpExchangeReader.fromJson(json);
+
   expect(exchange.request.protocol).toBe(HttpProtocol.HTTPS);
   expect(exchange.request.method).toBe(HttpMethod.POST);
+  expect(exchange.request.headers.get("accept")).toBe("*/*");
+  expect(exchange.request.headers.get("multi-value")).toBe("value1");
+  expect(exchange.request.headers.getAll("multi-value")).toEqual([
+    "value1",
+    "value2"
+  ]);
+  expect(exchange.request.body).toBe("a request body");
+
   expect(exchange.response.statusCode).toBe(404);
+  expect(exchange.response.headers.get("content-length")).toBe("15");
+  expect(exchange.response.headers.get("Upper-Case")).toBe("yes");
+  expect(exchange.response.headers.get("upper-case")).toBe("yes");
+  expect(exchange.response.body).toBe("a response body");
 });

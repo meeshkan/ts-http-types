@@ -28,15 +28,64 @@ export enum HttpProtocol {
   HTTPS
 }
 
+/** HTTP request or response headers. */
+export class HttpHeaders {
+  private headers: Map<string, string[]>;
+
+  constructor(headers?: { [name: string]: string | string[] }) {
+    if (headers) {
+      this.headers = new Map<string, string[]>();
+      Object.keys(headers).forEach(headerName => {
+        let values: string | string[] = headers[headerName];
+        if (typeof values === "string") {
+          values = [values];
+        }
+        if (values.length > 0) {
+          this.headers.set(headerName.toLowerCase(), values);
+        }
+      });
+    } else {
+      this.headers = new Map<string, string[]>();
+    }
+  }
+
+  /**
+   * The first header value for the given header name, if any.
+   *
+   * @param headerName Header name.
+   *
+   * @returns The first header value, or null if none.
+   * @see #getAll
+   */
+  get(headerName: string): string | null {
+    const values = this.headers.get(headerName.toLowerCase());
+    return values && values.length > 0 ? values[0] : null;
+  }
+
+  /**
+   * All header values for the given header name.
+   *
+   * @param headerName The header name.
+   *
+   * @returns an immutable list of header values, or an empty list if none
+   * @see #get
+   */
+  getAll(headerName: string): string[] {
+    return this.headers.get(headerName.toLowerCase()) || new Array<string>();
+  }
+}
+
 /** HTTP request. */
 export class HttpRequest {
   protocol: HttpProtocol;
   method: HttpMethod;
+  headers: HttpHeaders;
   body?: string;
 
   public constructor(builder: HttpRequestBuilder) {
     this.protocol = builder.protocol;
     this.method = builder.method;
+    this.headers = builder.headers;
     this.body = builder.body;
   }
 }
@@ -44,6 +93,7 @@ export class HttpRequest {
 export class HttpRequestBuilder {
   protocol?: HttpProtocol;
   method?: HttpMethod;
+  headers?: HttpHeaders;
   body?: string;
 
   withProtocol(protocol: HttpProtocol): this {
@@ -61,6 +111,11 @@ export class HttpRequestBuilder {
     return this;
   }
 
+  withHeaders(headers: HttpHeaders): this {
+    this.headers = headers;
+    return this;
+  }
+
   build(): HttpRequest {
     return new HttpRequest(this);
   }
@@ -68,20 +123,28 @@ export class HttpRequestBuilder {
 
 export class HttpResponse {
   statusCode?: number;
+  headers: HttpHeaders;
   body?: string;
 
   constructor(builder: HttpResponseBuilder) {
     this.statusCode = builder.statusCode;
+    this.headers = builder.headers;
     this.body = builder.body;
   }
 }
 
 export class HttpResponseBuilder {
   statusCode?: number;
+  headers?: HttpHeaders;
   body?: string;
 
   withStatusCode(statusCode: number): this {
     this.statusCode = statusCode;
+    return this;
+  }
+
+  withHeaders(headers: HttpHeaders): this {
+    this.headers = headers;
     return this;
   }
 
@@ -112,14 +175,23 @@ export class HttpExchangeReader {
       HttpProtocol[(parsedRequest.protocol as string).toUpperCase()];
     const method: HttpMethod =
       HttpMethod[(parsedRequest.method as string).toUpperCase()];
+    const requestHeaders: HttpHeaders = new HttpHeaders(parsedRequest.headers);
 
     const request = new HttpRequestBuilder()
       .withProtocol(protocol)
       .withMethod(method)
+      .withHeaders(requestHeaders)
+      .withBody(parsedRequest.body)
       .build();
+
+    const responseHeaders: HttpHeaders = new HttpHeaders(
+      parsedResponse.headers
+    );
 
     const response = new HttpResponseBuilder()
       .withStatusCode(parsedResponse.statusCode)
+      .withHeaders(responseHeaders)
+      .withBody(parsedResponse.body)
       .build();
 
     return new HttpExchange(request, response);
