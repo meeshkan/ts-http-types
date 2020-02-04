@@ -23,9 +23,9 @@ export enum HttpMethod {
 /** HTTP request protocol. */
 export enum HttpProtocol {
   /** Unencrypted HTTP protocol. */
-  HTTP,
+  HTTP = "HTTP",
   /** Encrypted HTTPS protocol. */
-  HTTPS
+  HTTPS = "HTTPS"
 }
 
 /** HTTP request or response headers. */
@@ -75,57 +75,170 @@ export class HttpHeaders {
   }
 }
 
-/** HTTP request. */
-export class HttpRequest {
-  timestamp?: Date;
-  protocol: HttpProtocol;
-  method: HttpMethod;
-  headers: HttpHeaders;
-  body?: string;
+/** HTTP request query parameters. */
+export class HttpQueryParameters {
+  private parameters: Map<string, string[]>;
 
-  public constructor(builder: HttpRequestBuilder) {
-    this.timestamp = builder.timestamp;
-    this.protocol = builder.protocol;
-    this.method = builder.method;
-    this.headers = builder.headers;
-    this.body = builder.body;
+  constructor(parameters?: { string: string | string[] }) {
+    if (parameters) {
+      this.parameters = new Map<string, string[]>();
+      Object.keys(parameters).forEach(parameterName => {
+        let values: string | string[] = parameters[parameterName];
+        if (typeof values === "string") {
+          values = [values];
+        }
+        if (values.length > 0) {
+          this.parameters.set(parameterName.toLowerCase(), values);
+        }
+      });
+    } else {
+      this.parameters = new Map<string, string[]>();
+    }
+  }
+
+  /**
+   * The first parameter value for the given parameter name, if any.
+   *
+   * @param parameterName The parameter name.
+   *
+   * @returns The first parameter value, or null if none.
+   * @see #getAll
+   */
+  get(parameterName: string): string | null {
+    const values = this.parameters.get(parameterName.toLowerCase());
+    return values && values.length > 0 ? values[0] : null;
+  }
+
+  /**
+   * All parameter values for the given parameter name.
+   *
+   * @param parameterName The parameter name.
+   *
+   * @returns a list of parameter values, or an empty list if none
+   * @see #get
+   */
+  getAll(parameterName: string): string[] {
+    return (
+      this.parameters.get(parameterName.toLowerCase()) || new Array<string>()
+    );
   }
 }
 
-export class HttpRequestBuilder {
+/** HTTP request. */
+export interface HttpRequest {
   timestamp?: Date;
-  protocol?: HttpProtocol;
-  method?: HttpMethod;
-  headers?: HttpHeaders;
+  method: HttpMethod;
+  protocol: HttpProtocol;
+  host: string;
+  headers: HttpHeaders;
   body?: string;
+  path: string;
+  pathname: string;
+  query: HttpQueryParameters;
+}
 
-  withTimestamp(timestamp: Date): this {
-    this.timestamp = timestamp;
-    return this;
+/** HTTP request. */
+export interface HttpRequestFromPath {
+  timestamp?: Date;
+  method: HttpMethod;
+  protocol: HttpProtocol;
+  host: string;
+  headers: HttpHeaders;
+  body?: string;
+  path: string;
+}
+
+/** HTTP request. */
+export interface HttpRequestFromPathNameAndQuery {
+  timestamp?: Date;
+  method: HttpMethod;
+  protocol: HttpProtocol;
+  host: string;
+  headers: HttpHeaders;
+  body?: string;
+  pathname: string;
+  query: { string: string | string[] };
+}
+
+export class HttpRequestBuilder {
+  static build(requestData: HttpRequestFromPath): HttpRequest {
+    const url = new URL("file://" + requestData.path);
+
+    const queryMap = new Object();
+    const queryString = url.search.substring(1);
+    for (const entry of queryString.split("&")) {
+      const pair = entry.split("=");
+      const parameterName = decodeURIComponent(pair[0]);
+      const parameterValue = decodeURIComponent(pair[1]);
+
+      let existingEntry = queryMap[parameterName] as string[];
+      if (!existingEntry) {
+        existingEntry = new Array<string>();
+        queryMap[parameterName] = existingEntry;
+      }
+      existingEntry.push(parameterValue);
+    }
+    const query = new HttpQueryParameters(
+      queryMap as { string: string | string[] }
+    );
+
+    return {
+      timestamp: requestData.timestamp,
+      method: requestData.method,
+      protocol: requestData.protocol,
+      host: requestData.host,
+      headers: requestData.headers,
+      body: requestData.body,
+      path: requestData.path,
+      pathname: url.pathname,
+      query: query
+    };
   }
+  static buildFromPathnameAndQuery(
+    requestData: HttpRequestFromPathNameAndQuery
+  ): HttpRequest {
+    let path = requestData.pathname;
+    if (requestData.query) {
+      path += "?";
+      let first = true;
+      for (const key in requestData.query) {
+        const value = requestData.query[key];
+        if (value instanceof String) {
+          if (first) {
+            first = false;
+          } else {
+            path += "&";
+          }
+          path +=
+            encodeURIComponent(key) +
+            "=" +
+            encodeURIComponent(value.toString());
+        } else {
+          for (const entry of value) {
+            if (first) {
+              first = false;
+            } else {
+              path += "&";
+            }
+            path += encodeURIComponent(key) + "=" + encodeURIComponent(entry);
+          }
+        }
+      }
+    }
 
-  withProtocol(protocol: HttpProtocol): this {
-    this.protocol = protocol;
-    return this;
-  }
+    const query = new HttpQueryParameters(requestData.query);
 
-  withMethod(method: HttpMethod): this {
-    this.method = method;
-    return this;
-  }
-
-  withBody(body: string): this {
-    this.body = body;
-    return this;
-  }
-
-  withHeaders(headers: HttpHeaders): this {
-    this.headers = headers;
-    return this;
-  }
-
-  build(): HttpRequest {
-    return new HttpRequest(this);
+    return {
+      timestamp: requestData.timestamp,
+      method: requestData.method,
+      protocol: requestData.protocol,
+      host: requestData.host,
+      headers: requestData.headers,
+      body: requestData.body,
+      path: path,
+      pathname: requestData.pathname,
+      query: query
+    };
   }
 }
 
@@ -136,11 +249,9 @@ export interface HttpResponse {
   body?: string;
 }
 
-export class HttpExchange {
-  constructor(public request: HttpRequest, public response: HttpResponse) {
-    this.request = request;
-    this.response = response;
-  }
+export interface HttpExchange {
+  request: HttpRequest;
+  response: HttpResponse;
 }
 
 export class HttpExchangeReader {
@@ -158,13 +269,32 @@ export class HttpExchangeReader {
       HttpMethod[(parsedRequest.method as string).toUpperCase()];
     const requestHeaders: HttpHeaders = new HttpHeaders(parsedRequest.headers);
 
-    const request = new HttpRequestBuilder()
-      .withTimestamp(requestTimestamp)
-      .withProtocol(protocol)
-      .withMethod(method)
-      .withHeaders(requestHeaders)
-      .withBody(parsedRequest.body)
-      .build();
+    let request: HttpRequest;
+
+    if (parsedRequest.path) {
+      request = HttpRequestBuilder.build({
+        timestamp: requestTimestamp,
+        method: method,
+        protocol: protocol,
+        host: parsedRequest.host,
+        headers: requestHeaders,
+        body: parsedRequest.body,
+        path: parsedRequest.path
+      });
+    } else if (parsedRequest.pathname) {
+      request = HttpRequestBuilder.buildFromPathnameAndQuery({
+        timestamp: requestTimestamp,
+        method: method,
+        protocol: protocol,
+        host: parsedRequest.host,
+        headers: requestHeaders,
+        body: parsedRequest.body,
+        pathname: parsedRequest.pathname,
+        query: parsedRequest.query
+      });
+    } else {
+      throw new Error("Either 'path' or 'pathname' is required");
+    }
 
     const responseTimestamp = parsedResponse.timestamp
       ? new Date(parsedResponse.timestamp)
@@ -180,6 +310,6 @@ export class HttpExchangeReader {
       body: parsedResponse.body
     };
 
-    return new HttpExchange(request, response);
+    return { request, response };
   }
 }

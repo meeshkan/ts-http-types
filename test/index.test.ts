@@ -1,59 +1,53 @@
 import {
-  HttpExchange,
   HttpExchangeReader,
   HttpProtocol,
-  HttpRequestBuilder,
   HttpMethod,
   HttpResponse,
-  HttpHeaders
+  HttpHeaders,
+  HttpRequestBuilder,
+  HttpExchange
 } from "../src/index";
 
-test("HttpRequest building from code", () => {
-  const method = HttpMethod.GET;
-  const request1 = new HttpRequestBuilder().withMethod(method).build();
-  expect(request1.method).toBe(HttpMethod.GET);
-  expect(request1.body).toBeUndefined();
+test("Building exchange from code", () => {
+  const request = HttpRequestBuilder.build({
+    timestamp: new Date(),
+    method: HttpMethod.GET,
+    protocol: HttpProtocol.HTTPS,
+    host: "example.com",
+    headers: new HttpHeaders({
+      "accept-encoding": "gzip, deflate, br",
+      "cache-control": ["no-cache", "no-store"]
+    }),
+    path: "/my/path?q=v",
+    body: "request string body"
+  });
 
-  const request2 = new HttpRequestBuilder()
-    .withProtocol(HttpProtocol.HTTPS)
-    .withMethod(HttpMethod.POST)
-    .withBody("hello, world")
-    .build();
-  expect(request2.protocol).toBe(HttpProtocol.HTTPS);
-  expect(request2.method).toBe(HttpMethod.POST);
-  expect(request2.body).toBe("hello, world");
-});
-
-test("HttpResponse building from code", () => {
   const response: HttpResponse = {
-    headers: new HttpHeaders(),
-    statusCode: 404
+    headers: new HttpHeaders({
+      "accept-encoding": "gzip, deflate, br",
+      "cache-control": "no-cache"
+    }),
+    statusCode: 404,
+    body: "response string body"
   };
-  expect(response.statusCode).toBe(404);
+
+  const exchange: HttpExchange = { request, response };
+
+  expect(exchange.response.statusCode).toBe(404);
 });
 
-test("HttpExchange building from code", () => {
-  const request = new HttpRequestBuilder().withMethod(HttpMethod.GET).build();
-  const response: HttpResponse = {
-    headers: new HttpHeaders(),
-    statusCode: 200
-  };
-  const exchange = new HttpExchange(request, response);
-
-  expect(exchange.request.method).toBe(HttpMethod.GET);
-  expect(exchange.response.statusCode).toBe(200);
-});
-
-test("Http exchanges from JSON", () => {
+test("Http exchanges from JSON with path", () => {
   const json = `{
     "request": {
       "protocol": "https",
+      "host": "example.com",
       "timestamp": "2018-11-13T20:20:39+02:00",
       "method": "post",
       "headers": {
         "accept": "*/*",
         "multi-value": ["value1", "value2"]
       },
+      "path": "/a/path?a=b&v=1&v=2",
       "body": "a request body"
     },
     "response": {
@@ -72,14 +66,20 @@ test("Http exchanges from JSON", () => {
   expect(exchange.request.timestamp).toEqual(
     new Date("2018-11-13T20:20:39+02:00")
   );
-  expect(exchange.request.protocol).toBe(HttpProtocol.HTTPS);
   expect(exchange.request.method).toBe(HttpMethod.POST);
+  expect(exchange.request.protocol).toBe(HttpProtocol.HTTPS);
+  expect(exchange.request.host).toBe("example.com");
   expect(exchange.request.headers.get("accept")).toBe("*/*");
   expect(exchange.request.headers.get("multi-value")).toBe("value1");
   expect(exchange.request.headers.getAll("multi-value")).toEqual([
     "value1",
     "value2"
   ]);
+  expect(exchange.request.path).toBe("/a/path?a=b&v=1&v=2");
+  expect(exchange.request.pathname).toBe("/a/path");
+  expect(exchange.request.query.get("a")).toBe("b");
+  expect(exchange.request.query.get("v")).toBe("1");
+  expect(exchange.request.query.getAll("v")).toEqual(["1", "2"]);
   expect(exchange.request.body).toBe("a request body");
 
   expect(exchange.response.timestamp).toEqual(
@@ -90,4 +90,39 @@ test("Http exchanges from JSON", () => {
   expect(exchange.response.headers.get("Upper-Case")).toBe("yes");
   expect(exchange.response.headers.get("upper-case")).toBe("yes");
   expect(exchange.response.body).toBe("a response body");
+});
+
+test("Http exchanges from JSON with pathname and query", () => {
+  const json = `{
+    "request": {
+      "protocol": "https",
+      "timestamp": "2018-11-13T20:20:39+02:00",
+      "method": "post",
+      "headers": {
+        "accept": "*/*",
+        "multi-value": ["value1", "value2"]
+      },
+      "pathname": "/a/path",
+      "query": {
+        "a": "b",
+        "v": ["1", "2"]
+      },
+      "body": "a request body"
+    },
+    "response": {
+      "timestamp": "2019-11-13T20:20:39+02:00",
+      "statusCode": 404,
+      "headers": {
+        "content-length": "15",
+        "Upper-Case": "yes"
+      },
+      "body": "a response body"
+    }
+  }`;
+
+  const exchange = HttpExchangeReader.fromJson(json);
+  expect(exchange.request.path).toBe("/a/path?a=b&v=1&v=2");
+  expect(exchange.request.query.get("a")).toBe("b");
+  expect(exchange.request.query.get("v")).toBe("1");
+  expect(exchange.request.query.getAll("v")).toEqual(["1", "2"]);
 });
