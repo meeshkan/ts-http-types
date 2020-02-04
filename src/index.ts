@@ -129,49 +129,11 @@ export class HttpRequestBuilder {
   }
 }
 
-export class HttpResponse {
+export interface HttpResponse {
   timestamp?: Date;
   statusCode: number;
   headers: HttpHeaders;
   body?: string;
-
-  constructor(builder: HttpResponseBuilder) {
-    this.timestamp = builder.timestamp;
-    this.statusCode = builder.statusCode;
-    this.headers = builder.headers;
-    this.body = builder.body;
-  }
-}
-
-export class HttpResponseBuilder {
-  timestamp?: Date;
-  statusCode?: number;
-  headers?: HttpHeaders;
-  body?: string;
-
-  withTimestamp(timestamp: Date): this {
-    this.timestamp = timestamp;
-    return this;
-  }
-
-  withStatusCode(statusCode: number): this {
-    this.statusCode = statusCode;
-    return this;
-  }
-
-  withHeaders(headers: HttpHeaders): this {
-    this.headers = headers;
-    return this;
-  }
-
-  withBody(body: string): this {
-    this.body = body;
-    return this;
-  }
-
-  build(): HttpResponse {
-    return new HttpResponse(this);
-  }
 }
 
 export class HttpExchange {
@@ -211,12 +173,12 @@ export class HttpExchangeReader {
       parsedResponse.headers
     );
 
-    const response = new HttpResponseBuilder()
-      .withTimestamp(responseTimestamp)
-      .withStatusCode(parsedResponse.statusCode)
-      .withHeaders(responseHeaders)
-      .withBody(parsedResponse.body)
-      .build();
+    const response: HttpResponse = {
+      timestamp: responseTimestamp,
+      statusCode: parsedResponse.statusCode,
+      headers: responseHeaders,
+      body: parsedResponse.body
+    };
 
     return new HttpExchange(request, response);
   }

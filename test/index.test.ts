@@ -3,8 +3,9 @@ import {
   HttpExchangeReader,
   HttpProtocol,
   HttpRequestBuilder,
-  HttpResponseBuilder,
-  HttpMethod
+  HttpMethod,
+  HttpResponse,
+  HttpHeaders
 } from "../src/index";
 
 test("HttpRequest building from code", () => {
@@ -24,13 +25,19 @@ test("HttpRequest building from code", () => {
 });
 
 test("HttpResponse building from code", () => {
-  const response = new HttpResponseBuilder().withStatusCode(404).build();
+  const response: HttpResponse = {
+    headers: new HttpHeaders(),
+    statusCode: 404
+  };
   expect(response.statusCode).toBe(404);
 });
 
 test("HttpExchange building from code", () => {
   const request = new HttpRequestBuilder().withMethod(HttpMethod.GET).build();
-  const response = new HttpResponseBuilder().withStatusCode(200).build();
+  const response: HttpResponse = {
+    headers: new HttpHeaders(),
+    statusCode: 200
+  };
   const exchange = new HttpExchange(request, response);
 
   expect(exchange.request.method).toBe(HttpMethod.GET);
