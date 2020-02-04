@@ -182,3 +182,37 @@ test("Http exchanges from JSON with pathname and no query parameter", () => {
   const exchange = HttpExchangeReader.fromJson(json);
   expect(exchange.request.path).toBe("/a/path");
 });
+
+test("Http exchanges from JSON with pathname and single query parameter as array", () => {
+  const json = `{
+    "request": {
+      "protocol": "https",
+      "host": "example.com",
+      "timestamp": "2018-11-13T20:20:39+02:00",
+      "method": "post",
+      "headers": {
+        "accept": "*/*",
+        "multi-value": ["value1", "value2"]
+      },
+      "pathname": "/a/path",
+      "query": {"a": ["b"]},
+      "body": "a request body"
+    },
+    "response": {
+      "timestamp": "2019-11-13T20:20:39+02:00",
+      "statusCode": 404,
+      "headers": {
+        "content-length": "15",
+        "Upper-Case": "yes"
+      },
+      "body": "a response body"
+    }
+  }`;
+  const exchange = HttpExchangeReader.fromJson(json);
+  expect(exchange.request.pathname).toBe("/a/path");
+  expect(exchange.request.query.get("a")).toBe("b");
+  console.log("AAAA " + JSON.stringify(exchange));
+  expect(JSON.parse(JSON.stringify(exchange))["request"]["query"]["a"]).toBe(
+    "b"
+  );
+});

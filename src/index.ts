@@ -77,7 +77,8 @@ export class HttpHeaders {
   toJSON(): object {
     const result = {};
     this.headers.forEach(function(value, key) {
-      result[key] = value;
+      result[key] =
+        value instanceof Array && value.length == 1 ? value[0] : value;
     });
     return result;
   }
@@ -134,7 +135,8 @@ export class HttpQueryParameters {
   toJSON(): object {
     const result = {};
     this.parameters.forEach(function(value, key) {
-      result[key] = value;
+      result[key] =
+        value instanceof Array && value.length == 1 ? value[0] : value;
     });
     return result;
   }
