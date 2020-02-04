@@ -57,6 +57,7 @@ test("Building exchange from path", () => {
   let count = 0;
   HttpExchangeReader.fromJsonLines(writer.buffer, exchange => {
     expect(exchange.request.host).toBe("example.com");
+    expect(exchange.request.query.get("a")).toEqual("b");
     count++;
   });
   expect(count).toBe(2);
@@ -151,4 +152,33 @@ test("Http exchanges from JSON with pathname and query", () => {
   expect(exchange.request.query.get("a")).toBe("b");
   expect(exchange.request.query.get("v")).toBe("1");
   expect(exchange.request.query.getAll("v")).toEqual(["1", "2"]);
+});
+
+test("Http exchanges from JSON with pathname and no query parameter", () => {
+  const json = `{
+    "request": {
+      "protocol": "https",
+      "host": "example.com",
+      "timestamp": "2018-11-13T20:20:39+02:00",
+      "method": "post",
+      "headers": {
+        "accept": "*/*",
+        "multi-value": ["value1", "value2"]
+      },
+      "pathname": "/a/path",
+      "query": {},
+      "body": "a request body"
+    },
+    "response": {
+      "timestamp": "2019-11-13T20:20:39+02:00",
+      "statusCode": 404,
+      "headers": {
+        "content-length": "15",
+        "Upper-Case": "yes"
+      },
+      "body": "a response body"
+    }
+  }`;
+  const exchange = HttpExchangeReader.fromJson(json);
+  expect(exchange.request.path).toBe("/a/path");
 });

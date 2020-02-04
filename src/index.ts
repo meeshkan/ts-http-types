@@ -215,13 +215,13 @@ export class HttpRequestBuilder {
   ): HttpRequest {
     let path = requestData.pathname;
     if (requestData.query) {
-      path += "?";
       let first = true;
       for (const key in requestData.query) {
         const value = requestData.query[key];
         if (value instanceof String) {
           if (first) {
             first = false;
+            path += "?";
           } else {
             path += "&";
           }
@@ -233,6 +233,7 @@ export class HttpRequestBuilder {
           for (const entry of value) {
             if (first) {
               first = false;
+              path += "?";
             } else {
               path += "&";
             }
