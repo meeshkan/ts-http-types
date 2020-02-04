@@ -8,3 +8,65 @@ Typescript library to read and write records of HTTP exchanges in the [HTTP type
 ```sh
 $ npm install http-types
 ```
+
+# Writing HTTP exchanges
+Using `HttpExchangeWriter` a recording of HTTP traffic can be serialised for use with any program that can handle the HTTP Types format.
+```typescript
+const writer = new HttpExchangeWriter();
+
+const request = HttpRequestBuilder.fromPath({
+  timestamp: timestamp,
+  method: HttpMethod.GET,
+  protocol: HttpProtocol.HTTPS,
+  host: "example.com",
+  headers: {
+    "accept-encoding": "gzip, deflate, br",
+    "cache-control": ["no-cache", "no-store"]
+  },
+  path: "/my/path?a=b&q=1&q=2",
+  body: "request string body"
+});
+
+const response = HttpResponseBuilder.from({
+  headers: {
+    "accept-encoding": "gzip, deflate, br",
+    "cache-control": "no-cache"
+  },
+  statusCode: 404,
+  body: "response string body"
+});
+
+writer.write({ request, response });
+// Write multiple exchanges, if necessary.
+console.log(writer.buffer);
+```
+
+A HTTP request can also be created from query parameters as an object. The below request is identical to the one created above:
+
+```typescript
+const request = HttpRequestBuilder.fromPathnameAndQuery({
+  timestamp: timestamp,
+  method: HttpMethod.GET,
+  protocol: HttpProtocol.HTTPS,
+  host: "example.com",
+  headers: {
+    "accept-encoding": "gzip, deflate, br",
+    "cache-control": ["no-cache", "no-store"]
+  },
+  pathname: "/my/path",
+  query: {
+    a: "b",
+    q: ["1", "2"]
+  },
+  body: "request string body"
+});
+```
+
+# Reading HTTP exchanges
+With `HttpExchangeReader` HTTP Types recordings can be read for processing:
+```typescript
+HttpExchangeReader.fromJsonLines(writer.buffer, exchange => {
+  expect(exchange.request.host).toBe("example.com");
+  expect(exchange.request.query.get("a")).toEqual("b");
+});
+```
