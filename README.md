@@ -37,7 +37,10 @@ const response = HttpResponseBuilder.from({
 });
 
 writer.write({ request, response });
-// Write multiple exchanges, if necessary.
+
+// [...] (write multiple exchanges)
+
+// writer.buffer contains the exchanges in the HTTP types JSON Lines format.
 console.log(writer.buffer);
 ```
 
