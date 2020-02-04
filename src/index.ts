@@ -79,7 +79,7 @@ export class HttpHeaders {
 export class HttpQueryParameters {
   private parameters: Map<string, string[]>;
 
-  constructor(parameters?: { string: string | string[] }) {
+  constructor(parameters?: { [name: string]: string | string[] }) {
     if (parameters) {
       this.parameters = new Map<string, string[]>();
       Object.keys(parameters).forEach(parameterName => {
@@ -143,7 +143,7 @@ export interface HttpRequestFromPath {
   method: HttpMethod;
   protocol: HttpProtocol;
   host: string;
-  headers: HttpHeaders;
+  headers: { [name: string]: string | string[] };
   body?: string;
   path: string;
 }
@@ -154,14 +154,14 @@ export interface HttpRequestFromPathNameAndQuery {
   method: HttpMethod;
   protocol: HttpProtocol;
   host: string;
-  headers: HttpHeaders;
+  headers: { [name: string]: string | string[] };
   body?: string;
   pathname: string;
-  query: { string: string | string[] };
+  query: { [name: string]: string | string[] };
 }
 
 export class HttpRequestBuilder {
-  static build(requestData: HttpRequestFromPath): HttpRequest {
+  static fromPath(requestData: HttpRequestFromPath): HttpRequest {
     const url = new URL("file://" + requestData.path);
 
     const queryMap = new Object();
@@ -187,14 +187,14 @@ export class HttpRequestBuilder {
       method: requestData.method,
       protocol: requestData.protocol,
       host: requestData.host,
-      headers: requestData.headers,
+      headers: new HttpHeaders(requestData.headers),
       body: requestData.body,
       path: requestData.path,
       pathname: url.pathname,
       query: query
     };
   }
-  static buildFromPathnameAndQuery(
+  static fromPathnameAndQuery(
     requestData: HttpRequestFromPathNameAndQuery
   ): HttpRequest {
     let path = requestData.pathname;
@@ -233,7 +233,7 @@ export class HttpRequestBuilder {
       method: requestData.method,
       protocol: requestData.protocol,
       host: requestData.host,
-      headers: requestData.headers,
+      headers: new HttpHeaders(requestData.headers),
       body: requestData.body,
       path: path,
       pathname: requestData.pathname,
@@ -247,6 +247,39 @@ export interface HttpResponse {
   statusCode: number;
   headers: HttpHeaders;
   body?: string;
+}
+
+export interface HttpResponseData {
+  timestamp?: Date | string;
+  statusCode: number | string;
+  headers: { [name: string]: string | string[] };
+  body?: string;
+}
+
+export class HttpResponseBuilder {
+  static from(responseData: HttpResponseData): HttpResponse {
+    let timestamp;
+    if (responseData.timestamp instanceof Date) {
+      timestamp = responseData.timestamp;
+    } else if (responseData.timestamp != null) {
+      timestamp = Date.parse(responseData.timestamp);
+    } else {
+      timestamp = undefined;
+    }
+    let statusCode;
+    if (typeof responseData.statusCode === "string") {
+      statusCode = parseInt(responseData.statusCode);
+    } else {
+      statusCode = responseData.statusCode;
+    }
+
+    return {
+      timestamp: timestamp,
+      statusCode: statusCode,
+      headers: new HttpHeaders(responseData.headers),
+      body: responseData.body
+    };
+  }
 }
 
 export interface HttpExchange {
@@ -267,27 +300,26 @@ export class HttpExchangeReader {
       HttpProtocol[(parsedRequest.protocol as string).toUpperCase()];
     const method: HttpMethod =
       HttpMethod[(parsedRequest.method as string).toUpperCase()];
-    const requestHeaders: HttpHeaders = new HttpHeaders(parsedRequest.headers);
 
     let request: HttpRequest;
 
     if (parsedRequest.path) {
-      request = HttpRequestBuilder.build({
+      request = HttpRequestBuilder.fromPath({
         timestamp: requestTimestamp,
         method: method,
         protocol: protocol,
         host: parsedRequest.host,
-        headers: requestHeaders,
+        headers: parsedRequest.headers,
         body: parsedRequest.body,
         path: parsedRequest.path
       });
     } else if (parsedRequest.pathname) {
-      request = HttpRequestBuilder.buildFromPathnameAndQuery({
+      request = HttpRequestBuilder.fromPathnameAndQuery({
         timestamp: requestTimestamp,
         method: method,
         protocol: protocol,
         host: parsedRequest.host,
-        headers: requestHeaders,
+        headers: parsedRequest.headers,
         body: parsedRequest.body,
         pathname: parsedRequest.pathname,
         query: parsedRequest.query

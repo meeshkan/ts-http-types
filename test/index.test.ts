@@ -2,36 +2,55 @@ import {
   HttpExchangeReader,
   HttpProtocol,
   HttpMethod,
-  HttpResponse,
+  HttpResponseBuilder,
   HttpHeaders,
   HttpRequestBuilder,
   HttpExchange
 } from "../src/index";
 
-test("Building exchange from code", () => {
-  const request = HttpRequestBuilder.build({
+test("Building exchange from path", () => {
+  const request1 = HttpRequestBuilder.fromPath({
     timestamp: new Date(),
     method: HttpMethod.GET,
     protocol: HttpProtocol.HTTPS,
     host: "example.com",
-    headers: new HttpHeaders({
+    headers: {
       "accept-encoding": "gzip, deflate, br",
       "cache-control": ["no-cache", "no-store"]
-    }),
-    path: "/my/path?q=v",
+    },
+    path: "/my/path?a=b&q=1&q=2",
     body: "request string body"
   });
 
-  const response: HttpResponse = {
-    headers: new HttpHeaders({
+  const request2 = HttpRequestBuilder.fromPathnameAndQuery({
+    timestamp: new Date(),
+    method: HttpMethod.GET,
+    protocol: HttpProtocol.HTTPS,
+    host: "example.com",
+    headers: {
+      "accept-encoding": "gzip, deflate, br",
+      "cache-control": ["no-cache", "no-store"]
+    },
+    pathname: "/my/path",
+    query: {
+      a: "b",
+      q: ["1", "2"]
+    },
+    body: "request string body"
+  });
+
+  expect(request1).toEqual(request2);
+
+  const response = HttpResponseBuilder.from({
+    headers: {
       "accept-encoding": "gzip, deflate, br",
       "cache-control": "no-cache"
-    }),
+    },
     statusCode: 404,
     body: "response string body"
-  };
+  });
 
-  const exchange: HttpExchange = { request, response };
+  const exchange: HttpExchange = { request: request1, response };
 
   expect(exchange.response.statusCode).toBe(404);
 });
