@@ -211,7 +211,6 @@ test("Http exchanges from JSON with pathname and single query parameter as array
   const exchange = HttpExchangeReader.fromJson(json);
   expect(exchange.request.pathname).toBe("/a/path");
   expect(exchange.request.query.get("a")).toBe("b");
-  console.log("AAAA " + JSON.stringify(exchange));
   expect(JSON.parse(JSON.stringify(exchange))["request"]["query"]["a"]).toBe(
     "b"
   );
