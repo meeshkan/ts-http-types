@@ -73,6 +73,14 @@ export class HttpHeaders {
   getAll(headerName: string): string[] {
     return this.headers.get(headerName.toLowerCase()) || new Array<string>();
   }
+
+  toJSON(): object {
+    const result = {};
+    this.headers.forEach(function(value, key) {
+      result[key] = value;
+    });
+    return result;
+  }
 }
 
 /** HTTP request query parameters. */
@@ -121,6 +129,14 @@ export class HttpQueryParameters {
     return (
       this.parameters.get(parameterName.toLowerCase()) || new Array<string>()
     );
+  }
+
+  toJSON(): object {
+    const result = {};
+    this.parameters.forEach(function(value, key) {
+      result[key] = value;
+    });
+    return result;
   }
 }
 
@@ -343,5 +359,24 @@ export class HttpExchangeReader {
     };
 
     return { request, response };
+  }
+
+  static fromJsonLines(
+    jsonLines: string,
+    callback: (exchange: HttpExchange) => void
+  ): void {
+    jsonLines.split("\n").forEach(line => {
+      if (line.length > 0) {
+        const exchange = HttpExchangeReader.fromJson(line);
+        callback(exchange);
+      }
+    });
+  }
+}
+
+export class HttpExchangeWriter {
+  buffer = "";
+  write(exchange: HttpExchange): void {
+    this.buffer += JSON.stringify(exchange) + "\n";
   }
 }

@@ -3,14 +3,14 @@ import {
   HttpProtocol,
   HttpMethod,
   HttpResponseBuilder,
-  HttpHeaders,
   HttpRequestBuilder,
-  HttpExchange
+  HttpExchangeWriter
 } from "../src/index";
 
 test("Building exchange from path", () => {
-  const request1 = HttpRequestBuilder.fromPath({
-    timestamp: new Date(),
+  const timestamp = new Date();
+  const request = HttpRequestBuilder.fromPath({
+    timestamp: timestamp,
     method: HttpMethod.GET,
     protocol: HttpProtocol.HTTPS,
     host: "example.com",
@@ -23,7 +23,7 @@ test("Building exchange from path", () => {
   });
 
   const request2 = HttpRequestBuilder.fromPathnameAndQuery({
-    timestamp: new Date(),
+    timestamp: timestamp,
     method: HttpMethod.GET,
     protocol: HttpProtocol.HTTPS,
     host: "example.com",
@@ -39,7 +39,7 @@ test("Building exchange from path", () => {
     body: "request string body"
   });
 
-  expect(request1).toEqual(request2);
+  expect(request).toEqual(request2);
 
   const response = HttpResponseBuilder.from({
     headers: {
@@ -50,9 +50,16 @@ test("Building exchange from path", () => {
     body: "response string body"
   });
 
-  const exchange: HttpExchange = { request: request1, response };
+  const writer = new HttpExchangeWriter();
+  writer.write({ request, response });
+  writer.write({ request: request2, response });
 
-  expect(exchange.response.statusCode).toBe(404);
+  let count = 0;
+  HttpExchangeReader.fromJsonLines(writer.buffer, exchange => {
+    expect(exchange.request.host).toBe("example.com");
+    count++;
+  });
+  expect(count).toBe(2);
 });
 
 test("Http exchanges from JSON with path", () => {
