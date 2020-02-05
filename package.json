@@ -1,6 +1,6 @@
 {
   "name": "http-types",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "description": "Library for JSON serialisation of HTTP exchanges",
   "license": "MIT",
   "keywords": [

@@ -215,3 +215,22 @@ test("Http exchanges from JSON with pathname and single query parameter as array
     "b"
   );
 });
+
+test("Correct case of HTTP method and protocol", () => {
+  const request = HttpRequestBuilder.fromPathnameAndQuery({
+    method: HttpMethod.GET,
+    protocol: HttpProtocol.HTTPS,
+    host: "example.com",
+    pathname: "/my/path",
+    query: {
+      a: "b",
+      q: ["1", "2"]
+    },
+    headers: {},
+    body: "request string body"
+  });
+
+  const parsedJson = JSON.parse(JSON.stringify(request));
+  expect(parsedJson["method"]).toBe("get");
+  expect(parsedJson["protocol"]).toBe("https");
+});
