@@ -201,7 +201,7 @@ export class HttpRequestBuilder {
     );
 
     return {
-      timestamp: requestData.timestamp,
+      timestamp: requestData.timestamp ? requestData.timestamp : undefined,
       method: requestData.method,
       protocol: requestData.protocol,
       host: requestData.host,
@@ -248,7 +248,7 @@ export class HttpRequestBuilder {
     const query = new HttpQueryParameters(requestData.query);
 
     return {
-      timestamp: requestData.timestamp,
+      timestamp: requestData.timestamp ? requestData.timestamp : undefined,
       method: requestData.method,
       protocol: requestData.protocol,
       host: requestData.host,
@@ -355,7 +355,7 @@ export class HttpExchangeReader {
     );
 
     const response: HttpResponse = {
-      timestamp: responseTimestamp,
+      timestamp: responseTimestamp ? responseTimestamp : undefined,
       statusCode: parsedResponse.statusCode,
       headers: responseHeaders,
       body: parsedResponse.body

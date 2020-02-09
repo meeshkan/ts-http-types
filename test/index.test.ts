@@ -7,6 +7,23 @@ import {
   HttpExchangeWriter
 } from "../src/index";
 
+import Ajv from "ajv";
+import * as fs from "fs";
+import * as path from "path";
+
+function validateHttpTypesJson(json: string): void {
+  const ajv = new Ajv({ allErrors: true });
+  const schema = fs.readFileSync(
+    path.join(__dirname, "http-types-schema.json"),
+    "utf-8"
+  );
+
+  const valid = ajv.validate(JSON.parse(schema), JSON.parse(json));
+  if (!valid) {
+    throw new Error(ajv.errorsText(ajv.errors));
+  }
+}
+
 test("Building exchange from path", () => {
   const timestamp = new Date();
   const request = HttpRequestBuilder.fromPath({
@@ -56,6 +73,7 @@ test("Building exchange from path", () => {
 
   let count = 0;
   HttpExchangeReader.fromJsonLines(writer.buffer, exchange => {
+    validateHttpTypesJson(JSON.stringify(exchange));
     expect(exchange.request.host).toBe("example.com");
     expect(exchange.request.query.get("a")).toEqual("b");
     count++;
@@ -89,6 +107,7 @@ test("Http exchanges from JSON with path", () => {
   }`;
 
   const exchange = HttpExchangeReader.fromJson(json);
+  validateHttpTypesJson(JSON.stringify(exchange));
 
   expect(exchange.request.timestamp).toEqual(
     new Date("2018-11-13T20:20:39+02:00")
@@ -123,6 +142,7 @@ test("Http exchanges from JSON with pathname and query", () => {
   const json = `{
     "request": {
       "protocol": "https",
+      "host": "example.com",
       "timestamp": "2018-11-13T20:20:39+02:00",
       "method": "post",
       "headers": {
@@ -148,6 +168,8 @@ test("Http exchanges from JSON with pathname and query", () => {
   }`;
 
   const exchange = HttpExchangeReader.fromJson(json);
+  validateHttpTypesJson(JSON.stringify(exchange));
+
   expect(exchange.request.path).toBe("/a/path?a=b&v=1&v=2");
   expect(exchange.request.query.get("a")).toBe("b");
   expect(exchange.request.query.get("v")).toBe("1");
@@ -180,6 +202,8 @@ test("Http exchanges from JSON with pathname and no query parameter", () => {
     }
   }`;
   const exchange = HttpExchangeReader.fromJson(json);
+  validateHttpTypesJson(JSON.stringify(exchange));
+
   expect(exchange.request.path).toBe("/a/path");
 });
 
@@ -209,6 +233,7 @@ test("Http exchanges from JSON with pathname and single query parameter as array
     }
   }`;
   const exchange = HttpExchangeReader.fromJson(json);
+  validateHttpTypesJson(JSON.stringify(exchange));
   expect(exchange.request.pathname).toBe("/a/path");
   expect(exchange.request.query.get("a")).toBe("b");
   expect(JSON.parse(JSON.stringify(exchange))["request"]["query"]["a"]).toBe(
