@@ -259,3 +259,24 @@ test("Correct case of HTTP method and protocol", () => {
   expect(parsedJson["method"]).toBe("get");
   expect(parsedJson["protocol"]).toBe("https");
 });
+
+test("Error message on missing request properties", () => {
+  const requiredProperties = ["method", "protocol", "host"];
+  for (const property of requiredProperties) {
+    try {
+      const parsedObject = JSON.parse(`{
+        "method": "get",
+        "protocol": "https",
+        "host": "example.com",
+        "pathname": "/my/path",
+        "headers": {},
+        "body": "request string body"
+      }`);
+      delete parsedObject[property];
+      HttpRequestBuilder.fromPathnameAndQuery(parsedObject);
+      fail("No exception");
+    } catch (e) {
+      expect(e.message).toBe("request." + property + " is required");
+    }
+  }
+});

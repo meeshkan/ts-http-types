@@ -76,7 +76,7 @@ export class HttpHeaders {
 
   toJSON(): object {
     const result = {};
-    this.headers.forEach(function(value, key) {
+    this.headers.forEach((value, key) => {
       result[key] =
         value instanceof Array && value.length == 1 ? value[0] : value;
     });
@@ -134,7 +134,7 @@ export class HttpQueryParameters {
 
   toJSON(): object {
     const result = {};
-    this.parameters.forEach(function(value, key) {
+    this.parameters.forEach((value, key) => {
       result[key] =
         value instanceof Array && value.length == 1 ? value[0] : value;
     });
@@ -178,6 +178,21 @@ export interface HttpRequestFromPathNameAndQuery {
   query: { [name: string]: string | string[] };
 }
 
+function validateRequest(request: HttpRequest): void {
+  for (const requiredProperty of [
+    "method",
+    "protocol",
+    "host",
+    "headers",
+    "pathname",
+    "query"
+  ]) {
+    if (!request[requiredProperty]) {
+      throw Error(`request.${requiredProperty} is required`);
+    }
+  }
+}
+
 export class HttpRequestBuilder {
   static fromPath(requestData: HttpRequestFromPath): HttpRequest {
     const url = new URL("file://" + requestData.path);
@@ -200,7 +215,7 @@ export class HttpRequestBuilder {
       queryMap as { string: string | string[] }
     );
 
-    return {
+    const request = {
       timestamp: requestData.timestamp ? requestData.timestamp : undefined,
       method: requestData.method,
       protocol: requestData.protocol,
@@ -211,6 +226,8 @@ export class HttpRequestBuilder {
       pathname: url.pathname,
       query: query
     };
+    validateRequest(request);
+    return request;
   }
   static fromPathnameAndQuery(
     requestData: HttpRequestFromPathNameAndQuery
@@ -247,7 +264,7 @@ export class HttpRequestBuilder {
 
     const query = new HttpQueryParameters(requestData.query);
 
-    return {
+    const request = {
       timestamp: requestData.timestamp ? requestData.timestamp : undefined,
       method: requestData.method,
       protocol: requestData.protocol,
@@ -258,6 +275,8 @@ export class HttpRequestBuilder {
       pathname: requestData.pathname,
       query: query
     };
+    validateRequest(request);
+    return request;
   }
 }
 
