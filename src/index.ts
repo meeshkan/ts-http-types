@@ -193,8 +193,7 @@ function validateRequest(request: HttpRequest): void {
   }
 }
 
-const parseQuery = (queryString: string): HttpQueryParameters => {
-  const searchParams = new URLSearchParams(queryString);
+const parseQuery = (searchParams: URLSearchParams): HttpQueryParameters => {
   const queryMap = new Object();
   for (const [key, value] of searchParams) {
     const parameterName = decodeURIComponent(key);
@@ -216,8 +215,7 @@ const parseQuery = (queryString: string): HttpQueryParameters => {
 export class HttpRequestBuilder {
   static fromPath(requestData: HttpRequestFromPath): HttpRequest {
     const url = new URL("file://" + requestData.path);
-
-    const query = parseQuery(url.search);
+    const query = parseQuery(url.searchParams);
 
     const request = {
       timestamp: requestData.timestamp ? requestData.timestamp : undefined,
