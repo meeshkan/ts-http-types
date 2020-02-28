@@ -88,10 +88,7 @@ test("Building exchange from path with no query parameters", () => {
     method: HttpMethod.GET,
     protocol: HttpProtocol.HTTPS,
     host: "example.com",
-    headers: {
-      "accept-encoding": "gzip, deflate, br",
-      "cache-control": ["no-cache", "no-store"]
-    },
+    headers: {},
     path: "/my/path",
     body: "request string body"
   });
