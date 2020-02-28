@@ -81,6 +81,23 @@ test("Building exchange from path", () => {
   expect(count).toBe(2);
 });
 
+test("Building exchange from path with no query parameters", () => {
+  const timestamp = new Date();
+  const request = HttpRequestBuilder.fromPath({
+    timestamp: timestamp,
+    method: HttpMethod.GET,
+    protocol: HttpProtocol.HTTPS,
+    host: "example.com",
+    headers: {
+      "accept-encoding": "gzip, deflate, br",
+      "cache-control": ["no-cache", "no-store"]
+    },
+    path: "/my/path",
+    body: "request string body"
+  });
+  expect(request.query.toJSON()).toEqual({});
+});
+
 test("Http exchanges from JSON with path", () => {
   const json = `{
     "request": {
