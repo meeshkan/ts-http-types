@@ -193,27 +193,29 @@ function validateRequest(request: HttpRequest): void {
   }
 }
 
+const parseQuery = (searchParams: URLSearchParams): HttpQueryParameters => {
+  const queryMap = new Object();
+  for (const [key, value] of searchParams) {
+    const parameterName = decodeURIComponent(key);
+    const parameterValue = decodeURIComponent(value);
+
+    let existingEntry = queryMap[parameterName] as string[];
+    if (!existingEntry) {
+      existingEntry = new Array<string>();
+      queryMap[parameterName] = existingEntry;
+    }
+    existingEntry.push(parameterValue);
+  }
+  const query = new HttpQueryParameters(
+    queryMap as { string: string | string[] }
+  );
+  return query;
+};
+
 export class HttpRequestBuilder {
   static fromPath(requestData: HttpRequestFromPath): HttpRequest {
     const url = new URL("file://" + requestData.path);
-
-    const queryMap = new Object();
-    const queryString = url.search.substring(1);
-    for (const entry of queryString.split("&")) {
-      const pair = entry.split("=");
-      const parameterName = decodeURIComponent(pair[0]);
-      const parameterValue = decodeURIComponent(pair[1]);
-
-      let existingEntry = queryMap[parameterName] as string[];
-      if (!existingEntry) {
-        existingEntry = new Array<string>();
-        queryMap[parameterName] = existingEntry;
-      }
-      existingEntry.push(parameterValue);
-    }
-    const query = new HttpQueryParameters(
-      queryMap as { string: string | string[] }
-    );
+    const query = parseQuery(url.searchParams);
 
     const request = {
       timestamp: requestData.timestamp ? requestData.timestamp : undefined,
