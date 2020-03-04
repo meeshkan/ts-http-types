@@ -3,7 +3,7 @@
 [![MIT licensed](http://img.shields.io/:license-MIT-blue.svg)](LICENSE)
 [![npm version](https://img.shields.io/npm/v/http-types)](https://npmjs.org/http-types)
 
-Typescript library to read and write records of HTTP exchanges in the [HTTP types](https://meeshkan.github.io/http-types/) format.
+Typescript library to read and write records of HTTP exchanges in the [http-types](https://meeshkan.github.io/http-types/) format.
 
 ## Install
 ```sh
@@ -11,7 +11,7 @@ $ npm install http-types
 ```
 
 # Writing HTTP exchanges
-Using `HttpExchangeWriter` a recording of HTTP traffic can be serialised for use with any program that can handle the HTTP Types format.
+Using `HttpExchangeWriter` a recording of HTTP traffic can be serialised for use with any program that can handle the http-types format.
 ```typescript
 const writer = new HttpExchangeWriter();
 
@@ -41,7 +41,7 @@ writer.write({ request, response });
 
 // [...] (write multiple exchanges)
 
-// writer.buffer contains the exchanges in the HTTP types JSON Lines format.
+// writer.buffer contains the exchanges in the http-types JSON Lines format.
 console.log(writer.buffer);
 ```
 
@@ -67,7 +67,7 @@ const request = HttpRequestBuilder.fromPathnameAndQuery({
 ```
 
 # Reading HTTP exchanges
-With `HttpExchangeReader` HTTP Types recordings can be read for processing:
+With `HttpExchangeReader` http-types recordings can be read for processing:
 ```typescript
 HttpExchangeReader.fromJsonLines(writer.buffer, exchange => {
   expect(exchange.request.host).toBe("example.com");
