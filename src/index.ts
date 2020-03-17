@@ -33,8 +33,8 @@ export class HttpHeaders {
   private headers: Map<string, string[]>;
 
   constructor(headers?: { [name: string]: string | string[] }) {
+    this.headers = new Map<string, string[]>();
     if (headers) {
-      this.headers = new Map<string, string[]>();
       Object.keys(headers).forEach(headerName => {
         let values: string | string[] = headers[headerName];
         if (typeof values === "string") {
@@ -44,8 +44,6 @@ export class HttpHeaders {
           this.headers.set(headerName.toLowerCase(), values);
         }
       });
-    } else {
-      this.headers = new Map<string, string[]>();
     }
   }
 
@@ -89,8 +87,8 @@ export class HttpQueryParameters {
   private parameters: Map<string, string[]>;
 
   constructor(parameters?: { [name: string]: string | string[] }) {
+    this.parameters = new Map<string, string[]>();
     if (parameters) {
-      this.parameters = new Map<string, string[]>();
       Object.keys(parameters).forEach(parameterName => {
         let values: string | string[] = parameters[parameterName];
         if (typeof values === "string") {
@@ -100,8 +98,6 @@ export class HttpQueryParameters {
           this.parameters.set(parameterName.toLowerCase(), values);
         }
       });
-    } else {
-      this.parameters = new Map<string, string[]>();
     }
   }
 
